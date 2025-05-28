@@ -1,0 +1,258 @@
+//@version=5
+indicator("Session Range & Advanced Analysis Tools", overlay=true, max_boxes_count=100, max_lines_count=100)
+
+// Input parameters
+sessionStartHour = input.int(7, "Session Start Hour", minval=0, maxval=23)
+sessionStartMinute = input.int(30, "Session Start Minute", minval=0, maxval=59)
+sessionEndHour = input.int(10, "Session End Hour", minval=0, maxval=23)
+sessionEndMinute = input.int(0, "Session End Minute", minval=0, maxval=59)
+extendLines = input(true, "Extend Lines")
+rangeOpacity = input.int(80, "Range Box Opacity", minval=0, maxval=100)
+showLabels = input(true, "Show Labels")
+maxBarsExtend = input.int(50, "Max Bars to Extend", minval=10, maxval=200)
+
+// === INDICATOR SETTINGS ===
+// Moving Averages
+showMA = input.bool(true, "Show Moving Averages", group="Moving Averages")
+ma1_length = input.int(21, "MA1 Length", minval=1, group="Moving Averages")
+ma2_length = input.int(50, "MA2 Length", minval=1, group="Moving Averages")
+ma3_length = input.int(200, "MA3 Length", minval=1, group="Moving Averages")
+ma_type = input.string("EMA", "MA Type", options=["SMA", "EMA", "WMA"], group="Moving Averages")
+
+// RSI Settings
+showRSI = input.bool(true, "Show RSI Levels", group="RSI")
+rsi_length = input.int(14, "RSI Length", minval=1, group="RSI")
+rsi_overbought = input.float(70.0, "RSI Overbought", group="RSI")
+rsi_oversold = input.float(30.0, "RSI Oversold", group="RSI")
+
+// VWAP Settings
+showVWAP = input.bool(true, "Show VWAP", group="VWAP")
+vwap_bands = input.bool(true, "Show VWAP Bands", group="VWAP")
+vwap_std_dev = input.float(2.0, "VWAP Standard Deviation", group="VWAP")
+
+// Volume Profile
+showVP = input.bool(true, "Show Volume at Session Levels", group="Volume")
+
+// Support/Resistance
+showSR = input.bool(true, "Show Key S/R Levels", group="Support/Resistance")
+lookback_period = input.int(20, "S/R Lookback Period", minval=5, group="Support/Resistance")
+
+// Colors
+rangeColor = color.new(color.blue, 70)
+ma1_color = color.new(color.orange, 0)
+ma2_color = color.new(color.purple, 0)
+ma3_color = color.new(color.red, 0)
+vwap_color = color.new(color.yellow, 0)
+vwap_band_color = color.new(color.yellow, 80)
+sr_color = color.new(color.gray, 40)
+
+// Session time calculation
+sessionStart = sessionStartHour * 60 + sessionStartMinute
+sessionEnd = sessionEndHour * 60 + sessionEndMinute
+currentTimeMinutes = hour * 60 + minute
+isInSession = currentTimeMinutes >= sessionStart and currentTimeMinutes <= sessionEnd
+
+// Variables to store session data
+var float sessionHigh = na
+var float sessionLow = na
+var int sessionStartBar = na
+var int sessionEndBar = na
+var bool newSession = false
+var float sessionVWAP = na
+var float sessionVolume = na
+
+// Detect new session start/end
+sessionJustStarted = not isInSession[1] and isInSession
+sessionJustEnded = isInSession[1] and not isInSession
+
+// Reset session values on new session
+if sessionJustStarted
+    sessionHigh := high
+    sessionLow := low
+    sessionStartBar := bar_index
+    newSession := true
+    sessionVWAP := 0.0
+    sessionVolume := 0.0
+else
+    newSession := false
+
+// Update session high/low and VWAP during session
+if isInSession
+    if high > sessionHigh
+        sessionHigh := high
+    if low < sessionLow
+        sessionLow := low
+    
+    // Calculate session VWAP
+    sessionVolume += volume
+    sessionVWAP += (high + low + close) / 3 * volume
+
+// Mark session end
+if sessionJustEnded
+    sessionEndBar := bar_index - 1
+    if sessionVolume > 0
+        sessionVWAP := sessionVWAP / sessionVolume
+
+// === MOVING AVERAGES ===
+ma_function(src, length, type) =>
+    switch type
+        "SMA" => ta.sma(src, length)
+        "EMA" => ta.ema(src, length)
+        "WMA" => ta.wma(src, length)
+        => ta.ema(src, length)
+
+ma1 = ma_function(close, ma1_length, ma_type)
+ma2 = ma_function(close, ma2_length, ma_type)
+ma3 = ma_function(close, ma3_length, ma_type)
+
+plot(showMA ? ma1 : na, "MA1", color=ma1_color, linewidth=2)
+plot(showMA ? ma2 : na, "MA2", color=ma2_color, linewidth=2)
+plot(showMA ? ma3 : na, "MA3", color=ma3_color, linewidth=3)
+
+// === RSI ===
+rsi = ta.rsi(close, rsi_length)
+rsi_bull_signal = rsi < rsi_oversold and rsi[1] >= rsi_oversold
+rsi_bear_signal = rsi > rsi_overbought and rsi[1] <= rsi_overbought
+
+// Plot RSI signals
+plotshape(showRSI and rsi_bull_signal, "RSI Oversold Signal", shape.triangleup, location.belowbar, color.new(color.green, 0), size=size.small)
+plotshape(showRSI and rsi_bear_signal, "RSI Overbought Signal", shape.triangledown, location.abovebar, color.new(color.red, 0), size=size.small)
+
+// === VWAP ===
+vwap_value = ta.vwap(hlc3)
+vwap_dev = ta.stdev(hlc3, 20)
+vwap_upper = vwap_value + vwap_std_dev * vwap_dev
+vwap_lower = vwap_value - vwap_std_dev * vwap_dev
+
+plot(showVWAP ? vwap_value : na, "VWAP", color=vwap_color, linewidth=2)
+plot(showVWAP and vwap_bands ? vwap_upper : na, "VWAP Upper", color=vwap_band_color, linewidth=1)
+plot(showVWAP and vwap_bands ? vwap_lower : na, "VWAP Lower", color=vwap_band_color, linewidth=1)
+fill(plot(showVWAP and vwap_bands ? vwap_upper : na), plot(showVWAP and vwap_bands ? vwap_lower : na), color=color.new(vwap_band_color, 90))
+
+// === SUPPORT/RESISTANCE LEVELS ===
+pivot_high = ta.pivothigh(high, lookback_period, lookback_period)
+pivot_low = ta.pivotlow(low, lookback_period, lookback_period)
+
+// Draw S/R lines
+if showSR and not na(pivot_high)
+    line.new(bar_index - lookback_period, pivot_high, bar_index + maxBarsExtend, pivot_high, 
+             extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+
+if showSR and not na(pivot_low)
+    line.new(bar_index - lookback_period, pivot_low, bar_index + maxBarsExtend, pivot_low, 
+             extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+
+// === VOLUME ANALYSIS ===
+avg_volume = ta.sma(volume, 20)
+high_volume = volume > avg_volume * 1.5
+volume_color = high_volume ? color.new(color.orange, 60) : color.new(color.gray, 80)
+
+// Highlight high volume bars
+bgcolor(showVP and high_volume ? volume_color : na)
+
+// === SESSION RANGE DRAWING ===
+if sessionJustEnded and not na(sessionHigh) and not na(sessionLow) and not na(sessionStartBar)
+    box.new(sessionStartBar, sessionHigh, sessionEndBar, sessionLow,
+             border_color=rangeColor,
+             bgcolor=color.new(rangeColor, rangeOpacity),
+             extend=extend.none)
+    
+    // Add labels if enabled
+    if showLabels
+        label.new(sessionEndBar, sessionHigh, "SH: " + str.tostring(sessionHigh, "#.####"), 
+                 style=label.style_label_lower_left, color=color.blue, textcolor=color.white, size=size.small)
+        label.new(sessionEndBar, sessionLow, "SL: " + str.tostring(sessionLow, "#.####"), 
+                 style=label.style_label_upper_left, color=color.blue, textcolor=color.white, size=size.small)
+        
+        // Add session VWAP label
+        if not na(sessionVWAP)
+            label.new(sessionEndBar, sessionVWAP, "SVWAP: " + str.tostring(sessionVWAP, "#.####"), 
+                     style=label.style_label_left, color=color.yellow, textcolor=color.black, size=size.small)
+
+// Draw extending lines for current session
+var line currentHighLine = na
+var line currentLowLine = na
+var line sessionVWAPLine = na
+
+if extendLines and not na(sessionHigh) and not na(sessionLow)
+    if newSession
+        // Delete previous lines
+        if not na(currentHighLine)
+            line.delete(currentHighLine)
+        if not na(currentLowLine)
+            line.delete(currentLowLine)
+        if not na(sessionVWAPLine)
+            line.delete(sessionVWAPLine)
+    
+    if isInSession or sessionJustEnded
+        // Delete old lines
+        if not na(currentHighLine)
+            line.delete(currentHighLine)
+        if not na(currentLowLine)
+            line.delete(currentLowLine)
+        if not na(sessionVWAPLine)
+            line.delete(sessionVWAPLine)
+        
+        // Create new lines
+        extendType = sessionJustEnded ? extend.right : extend.none
+        endBar = sessionJustEnded ? bar_index + maxBarsExtend : bar_index
+        
+        currentHighLine := line.new(bar_index, sessionHigh, endBar, sessionHigh,
+                                   extend=extendType,
+                                   color=color.new(color.blue, 20),
+                                   style=line.style_dashed,
+                                   width=2)
+        
+        currentLowLine := line.new(bar_index, sessionLow, endBar, sessionLow,
+                                  extend=extendType,
+                                  color=color.new(color.blue, 20),
+                                  style=line.style_dashed,
+                                  width=2)
+        
+        // Draw session VWAP line
+        if sessionJustEnded and not na(sessionVWAP)
+            sessionVWAPLine := line.new(sessionEndBar, sessionVWAP, bar_index + maxBarsExtend, sessionVWAP,
+                                       extend=extend.right,
+                                       color=color.new(color.yellow, 30),
+                                       style=line.style_solid,
+                                       width=2)
+
+// === CONFLUENCE DETECTION ===
+// Detect confluence areas where multiple indicators align
+near_session_high = math.abs(close - sessionHigh) / sessionHigh < 0.002
+near_session_low = math.abs(close - sessionLow) / sessionLow < 0.002
+near_vwap = math.abs(close - vwap_value) / close < 0.001
+near_ma = math.abs(close - ma1) / close < 0.001 or math.abs(close - ma2) / close < 0.001
+at_sr_level = not na(pivot_high) or not na(pivot_low)
+
+confluence_bull = near_session_low and (near_vwap or near_ma) and rsi < 40
+confluence_bear = near_session_high and (near_vwap or near_ma) and rsi > 60
+
+plotshape(confluence_bull, "Bullish Confluence", shape.diamond, location.belowbar, color.new(color.lime, 0), size=size.normal)
+plotshape(confluence_bear, "Bearish Confluence", shape.diamond, location.abovebar, color.new(color.fuchsia, 0), size=size.normal)
+
+// === ALERTS ===
+alertcondition(confluence_bull, title="Bullish Confluence", message="Multiple bullish signals aligned")
+alertcondition(confluence_bear, title="Bearish Confluence", message="Multiple bearish signals aligned")
+alertcondition(rsi_bull_signal, title="RSI Oversold", message="RSI moving out of oversold territory")
+alertcondition(rsi_bear_signal, title="RSI Overbought", message="RSI moving out of overbought territory")
+
+// === ANALYSIS TABLE ===
+if barstate.islast and showLabels
+    var table analysisTable = table.new(position.top_right, 2, 8, bgcolor=color.white, border_width=1)
+    table.cell(analysisTable, 0, 0, "Session High", text_color=color.black, bgcolor=color.new(color.blue, 80))
+    table.cell(analysisTable, 1, 0, str.tostring(sessionHigh, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 1, "Session Low", text_color=color.black, bgcolor=color.new(color.blue, 80))
+    table.cell(analysisTable, 1, 1, str.tostring(sessionLow, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 2, "Session VWAP", text_color=color.black, bgcolor=color.new(color.yellow, 80))
+    table.cell(analysisTable, 1, 2, str.tostring(sessionVWAP, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 3, "Current RSI", text_color=color.black, bgcolor=color.new(color.gray, 80))
+    table.cell(analysisTable, 1, 3, str.tostring(rsi, "#.##"), text_color=color.black)
+    table.cell(analysisTable, 0, 4, "VWAP", text_color=color.black, bgcolor=color.new(color.yellow, 80))
+    table.cell(analysisTable, 1, 4, str.tostring(vwap_value, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 5, "MA1", text_color=color.black, bgcolor=color.new(color.orange, 80))
+    table.cell(analysisTable, 1, 5, str.tostring(ma1, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 6, "MA2", text_color=color.black, bgcolor=color.new(color.purple, 80))
+    table.cell(analysisTable, 1, 6, str.tostring(ma2, "#.####"), text_color=color.black)
+    table.cell(analysisTable, 0, 7, "Volume Status", text_color=color.black, bgcolor=color.new(color.gray, 80))
+    table.cell(analysisTable, 1, 7, high_volume ? "HIGH" : "NORMAL", text_color=high_volume ? color.red : color.black)
