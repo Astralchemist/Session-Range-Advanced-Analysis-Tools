@@ -2,6 +2,8 @@
 
 A comprehensive Pine Script v5 indicator that combines session-based analysis with multiple highly trusted technical indicators to provide professional-grade trading signals and confluence detection.
 
+![Session Range Advanced Analysis Tools](images/image.png)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
