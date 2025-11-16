@@ -240,21 +240,19 @@ var line[] sr_lines = array.new_line()
 if showSR and not na(pivot_high)
     // Remove oldest line if we've hit the limit
     if array.size(sr_lines) >= max_sr_lines
-        oldest_line = array.shift(sr_lines)
+        line oldest_line = array.shift(sr_lines)
         line.delete(oldest_line)
 
-    new_line = line.new(bar_index - lookback_period, pivot_high, bar_index + maxBarsExtend, pivot_high,
-                        extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+    line new_line = line.new(bar_index - lookback_period, pivot_high, bar_index + maxBarsExtend, pivot_high, extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
     array.push(sr_lines, new_line)
 
 if showSR and not na(pivot_low)
     // Remove oldest line if we've hit the limit
     if array.size(sr_lines) >= max_sr_lines
-        oldest_line = array.shift(sr_lines)
+        line oldest_line = array.shift(sr_lines)
         line.delete(oldest_line)
 
-    new_line = line.new(bar_index - lookback_period, pivot_low, bar_index + maxBarsExtend, pivot_low,
-                        extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+    line new_line = line.new(bar_index - lookback_period, pivot_low, bar_index + maxBarsExtend, pivot_low, extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
     array.push(sr_lines, new_line)
 
 // === VOLUME ANALYSIS ===
