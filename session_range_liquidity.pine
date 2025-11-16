@@ -228,32 +228,31 @@ plot(showVWAP and vwap_bands ? vwap_upper : na, "VWAP Upper", color=vwap_band_co
 plot(showVWAP and vwap_bands ? vwap_lower : na, "VWAP Lower", color=vwap_band_color, linewidth=1)
 fill(plot(showVWAP and vwap_bands ? vwap_upper : na), plot(showVWAP and vwap_bands ? vwap_lower : na), color=color.new(vwap_band_color, 90))
 
+// === PIVOT CALCULATIONS (Used by S/R, Confluence, and Liquidity) ===
+float pivot_high = ta.pivothigh(high, lookback_period, lookback_period)
+float pivot_low = ta.pivotlow(low, lookback_period, lookback_period)
+
 // === SUPPORT/RESISTANCE LEVELS ===
 // Line array management to prevent hitting max_lines limit
 var line[] sr_lines = array.new_line()
-
-pivot_high = ta.pivothigh(high, lookback_period, lookback_period)
-pivot_low = ta.pivotlow(low, lookback_period, lookback_period)
 
 // Draw S/R lines with automatic cleanup
 if showSR and not na(pivot_high)
     // Remove oldest line if we've hit the limit
     if array.size(sr_lines) >= max_sr_lines
-        oldest_line = array.shift(sr_lines)
+        line oldest_line = array.shift(sr_lines)
         line.delete(oldest_line)
 
-    new_line = line.new(bar_index - lookback_period, pivot_high, bar_index + maxBarsExtend, pivot_high,
-                        extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+    line new_line = line.new(bar_index - lookback_period, pivot_high, bar_index + maxBarsExtend, pivot_high, extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
     array.push(sr_lines, new_line)
 
 if showSR and not na(pivot_low)
     // Remove oldest line if we've hit the limit
     if array.size(sr_lines) >= max_sr_lines
-        oldest_line = array.shift(sr_lines)
+        line oldest_line = array.shift(sr_lines)
         line.delete(oldest_line)
 
-    new_line = line.new(bar_index - lookback_period, pivot_low, bar_index + maxBarsExtend, pivot_low,
-                        extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
+    line new_line = line.new(bar_index - lookback_period, pivot_low, bar_index + maxBarsExtend, pivot_low, extend=extend.right, color=sr_color, style=line.style_dotted, width=1)
     array.push(sr_lines, new_line)
 
 // === VOLUME ANALYSIS ===
