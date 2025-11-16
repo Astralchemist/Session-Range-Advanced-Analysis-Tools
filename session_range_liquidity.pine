@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 indicator("Session Range & Advanced Analysis Tools", overlay=true, max_boxes_count=100, max_lines_count=500, max_labels_count=100)
 
 // Input parameters
@@ -83,10 +83,10 @@ vwap_band_color = color.new(color.yellow, 80)
 sr_color = color.new(color.gray, 40)
 
 // Session time calculation
-sessionStart = sessionStartHour * 60 + sessionStartMinute
-sessionEnd = sessionEndHour * 60 + sessionEndMinute
-currentTimeMinutes = hour * 60 + minute
-isInSession = currentTimeMinutes >= sessionStart and currentTimeMinutes <= sessionEnd
+int sessionStart = sessionStartHour * 60 + sessionStartMinute
+int sessionEnd = sessionEndHour * 60 + sessionEndMinute
+int currentTimeMinutes = hour * 60 + minute
+bool isInSession = currentTimeMinutes >= sessionStart and currentTimeMinutes <= sessionEnd
 
 // Variables to store session data
 var float sessionHigh = na
@@ -98,8 +98,8 @@ var float sessionVWAP = na
 var float sessionVolume = na
 
 // Detect new session start/end
-sessionJustStarted = not isInSession[1] and isInSession
-sessionJustEnded = isInSession[1] and not isInSession
+bool sessionJustStarted = not isInSession[1] and isInSession
+bool sessionJustEnded = isInSession[1] and not isInSession
 
 // Reset session values on new session
 if sessionJustStarted
@@ -121,7 +121,7 @@ if isInSession
 
     // Calculate session VWAP (properly weighted)
     // VWAP = Sum(Price * Volume) / Sum(Volume)
-    typical_price = hlc3  // (high + low + close) / 3
+    float typical_price = hlc3  // (high + low + close) / 3
     sessionVolume := nz(sessionVolume) + volume
     sessionVWAP := nz(sessionVWAP) + (typical_price * volume)
 
@@ -134,14 +134,14 @@ if sessionJustEnded
         sessionVWAP := close
 
 // === ATR CALCULATION ===
-atr = ta.atr(atr_length)
-dynamic_threshold = use_atr_threshold ? atr * atr_multiplier / close : 0.001
+float atr = ta.atr(atr_length)
+float dynamic_threshold = use_atr_threshold ? atr * atr_multiplier / close : 0.001
 
 // === MULTI-TIMEFRAME ANALYSIS ===
-htf_ma = request.security(syminfo.tickerid, htf_timeframe, ta.ema(close, 50))
-htf_trend_up = close > htf_ma
-htf_trend_down = close < htf_ma
-htf_trend_color = htf_trend_up ? color.new(color.green, 90) : color.new(color.red, 90)
+float htf_ma = request.security(syminfo.tickerid, htf_timeframe, ta.ema(close, 50))
+bool htf_trend_up = close > htf_ma
+bool htf_trend_down = close < htf_ma
+color htf_trend_color = htf_trend_up ? color.new(color.green, 90) : color.new(color.red, 90)
 
 // Plot HTF trend background
 bgcolor(enable_mtf_filter ? htf_trend_color : na, title="HTF Trend")
@@ -154,18 +154,18 @@ ma_function(src, length, type) =>
         "WMA" => ta.wma(src, length)
         => ta.ema(src, length)
 
-ma1 = ma_function(close, ma1_length, ma_type)
-ma2 = ma_function(close, ma2_length, ma_type)
-ma3 = ma_function(close, ma3_length, ma_type)
+float ma1 = ma_function(close, ma1_length, ma_type)
+float ma2 = ma_function(close, ma2_length, ma_type)
+float ma3 = ma_function(close, ma3_length, ma_type)
 
 plot(showMA ? ma1 : na, "MA1", color=ma1_color, linewidth=2)
 plot(showMA ? ma2 : na, "MA2", color=ma2_color, linewidth=2)
 plot(showMA ? ma3 : na, "MA3", color=ma3_color, linewidth=3)
 
 // === RSI ===
-rsi = ta.rsi(close, rsi_length)
-rsi_bull_signal = rsi < rsi_oversold and rsi[1] >= rsi_oversold
-rsi_bear_signal = rsi > rsi_overbought and rsi[1] <= rsi_overbought
+float rsi = ta.rsi(close, rsi_length)
+bool rsi_bull_signal = rsi < rsi_oversold and rsi[1] >= rsi_oversold
+bool rsi_bear_signal = rsi > rsi_overbought and rsi[1] <= rsi_overbought
 
 // === RSI DIVERGENCE DETECTION ===
 // Bullish Regular Divergence: Price makes lower low, RSI makes higher low
@@ -177,13 +177,13 @@ var float prev_rsi_high = na
 var int prev_low_bar = na
 var int prev_high_bar = na
 
-pivot_rsi_low = ta.pivotlow(rsi, divergence_lookback, divergence_lookback)
-pivot_rsi_high = ta.pivothigh(rsi, divergence_lookback, divergence_lookback)
-pivot_price_low = ta.pivotlow(low, divergence_lookback, divergence_lookback)
-pivot_price_high = ta.pivothigh(high, divergence_lookback, divergence_lookback)
+float pivot_rsi_low = ta.pivotlow(rsi, divergence_lookback, divergence_lookback)
+float pivot_rsi_high = ta.pivothigh(rsi, divergence_lookback, divergence_lookback)
+float pivot_price_low = ta.pivotlow(low, divergence_lookback, divergence_lookback)
+float pivot_price_high = ta.pivothigh(high, divergence_lookback, divergence_lookback)
 
-bullish_divergence = false
-bearish_divergence = false
+bool bullish_divergence = false
+bool bearish_divergence = false
 
 if not na(pivot_rsi_low) and not na(pivot_price_low)
     if not na(prev_rsi_low) and not na(prev_price_low)
@@ -218,10 +218,10 @@ plotshape(show_rsi_divergence and bullish_divergence, "Bullish Divergence", shap
 plotshape(show_rsi_divergence and bearish_divergence, "Bearish Divergence", shape.circle, location.abovebar, color.new(color.orange, 0), size=size.normal, text="DIV")
 
 // === VWAP ===
-vwap_value = ta.vwap(hlc3)
-vwap_dev = ta.stdev(hlc3, 20)
-vwap_upper = vwap_value + vwap_std_dev * vwap_dev
-vwap_lower = vwap_value - vwap_std_dev * vwap_dev
+float vwap_value = ta.vwap(hlc3)
+float vwap_dev = ta.stdev(hlc3, 20)
+float vwap_upper = vwap_value + vwap_std_dev * vwap_dev
+float vwap_lower = vwap_value - vwap_std_dev * vwap_dev
 
 plot(showVWAP ? vwap_value : na, "VWAP", color=vwap_color, linewidth=2)
 plot(showVWAP and vwap_bands ? vwap_upper : na, "VWAP Upper", color=vwap_band_color, linewidth=1)
@@ -256,9 +256,9 @@ if showSR and not na(pivot_low)
     array.push(sr_lines, new_line)
 
 // === VOLUME ANALYSIS ===
-avg_volume = ta.sma(volume, 20)
-high_volume = volume > avg_volume * 1.5
-volume_color = high_volume ? color.new(color.orange, 60) : color.new(color.gray, 80)
+float avg_volume = ta.sma(volume, 20)
+bool high_volume = volume > avg_volume * 1.5
+color volume_color = high_volume ? color.new(color.orange, 60) : color.new(color.gray, 80)
 
 // Highlight high volume bars
 bgcolor(showVP and high_volume ? volume_color : na)
@@ -332,20 +332,20 @@ if extendLines and not na(sessionHigh) and not na(sessionLow)
 
 // === CONFLUENCE DETECTION WITH SCORING ===
 // Use dynamic ATR-based thresholds
-threshold = use_atr_threshold ? dynamic_threshold : 0.001
+float threshold = use_atr_threshold ? dynamic_threshold : 0.001
 
 // Individual confluence factors
-near_session_high = not na(sessionHigh) and math.abs(close - sessionHigh) / sessionHigh < (atr / sessionHigh)
-near_session_low = not na(sessionLow) and math.abs(close - sessionLow) / sessionLow < (atr / sessionLow)
-near_vwap = math.abs(close - vwap_value) / close < threshold
-near_ma1 = math.abs(close - ma1) / close < threshold
-near_ma2 = math.abs(close - ma2) / close < threshold
-near_ma3 = math.abs(close - ma3) / close < threshold
-at_sr_level = not na(pivot_high) or not na(pivot_low)
+bool near_session_high = not na(sessionHigh) and math.abs(close - sessionHigh) / sessionHigh < (atr / sessionHigh)
+bool near_session_low = not na(sessionLow) and math.abs(close - sessionLow) / sessionLow < (atr / sessionLow)
+bool near_vwap = math.abs(close - vwap_value) / close < threshold
+bool near_ma1 = math.abs(close - ma1) / close < threshold
+bool near_ma2 = math.abs(close - ma2) / close < threshold
+bool near_ma3 = math.abs(close - ma3) / close < threshold
+bool at_sr_level = not na(pivot_high) or not na(pivot_low)
 
 // Calculate confluence score (0-100)
-bullish_score = 0
-bearish_score = 0
+int bullish_score = 0
+int bearish_score = 0
 
 // Bullish scoring
 if near_session_low
@@ -392,12 +392,12 @@ if enable_mtf_filter and htf_trend_down
     bearish_score += 10
 
 // Generate signals based on minimum score
-confluence_bull = bullish_score >= min_confluence_score
-confluence_bear = bearish_score >= min_confluence_score
+bool confluence_bull = bullish_score >= min_confluence_score
+bool confluence_bear = bearish_score >= min_confluence_score
 
 // Color code by strength
-bull_color = bullish_score >= 80 ? color.new(color.lime, 0) : bullish_score >= 70 ? color.new(color.green, 20) : color.new(color.green, 40)
-bear_color = bearish_score >= 80 ? color.new(color.fuchsia, 0) : bearish_score >= 70 ? color.new(color.red, 20) : color.new(color.red, 40)
+color bull_color = bullish_score >= 80 ? color.new(color.lime, 0) : bullish_score >= 70 ? color.new(color.green, 20) : color.new(color.green, 40)
+color bear_color = bearish_score >= 80 ? color.new(color.fuchsia, 0) : bearish_score >= 70 ? color.new(color.red, 20) : color.new(color.red, 40)
 
 // Plot confluence signals
 plotshape(confluence_bull, "Bullish Confluence", shape.diamond, location.belowbar, bull_color, size=size.normal)
@@ -412,17 +412,17 @@ if show_confluence_score and confluence_bear
 
 // === RISK MANAGEMENT MODULE ===
 // Calculate ATR-based stop loss and take profit levels
-atr_stop = atr * atr_stop_multiplier
+float atr_stop = atr * atr_stop_multiplier
 
 // For bullish setups
-bull_stop_loss = close - atr_stop
-bull_take_profit = close + (atr_stop * risk_reward_ratio)
-bull_risk_reward = (bull_take_profit - close) / (close - bull_stop_loss)
+float bull_stop_loss = close - atr_stop
+float bull_take_profit = close + (atr_stop * risk_reward_ratio)
+float bull_risk_reward = (bull_take_profit - close) / (close - bull_stop_loss)
 
 // For bearish setups
-bear_stop_loss = close + atr_stop
-bear_take_profit = close - (atr_stop * risk_reward_ratio)
-bear_risk_reward = (close - bear_take_profit) / (bear_stop_loss - close)
+float bear_stop_loss = close + atr_stop
+float bear_take_profit = close - (atr_stop * risk_reward_ratio)
+float bear_risk_reward = (close - bear_take_profit) / (bear_stop_loss - close)
 
 // Plot risk levels for active signals
 var line bull_sl_line = na
@@ -448,7 +448,7 @@ if show_risk_levels and confluence_bull
                              color=color.new(color.green, 30), style=line.style_dashed, width=2)
 
     // Add label with risk info
-    risk_text = "SL: " + str.tostring(bull_stop_loss, "#.####") + "\nTP: " + str.tostring(bull_take_profit, "#.####") + "\nR:R " + str.tostring(risk_reward_ratio, "#.#")
+    string risk_text = "SL: " + str.tostring(bull_stop_loss, "#.####") + "\nTP: " + str.tostring(bull_take_profit, "#.####") + "\nR:R " + str.tostring(risk_reward_ratio, "#.#")
     bull_risk_label := label.new(bar_index, bull_take_profit, risk_text,
                                   style=label.style_label_down, color=color.green, textcolor=color.white, size=size.small)
 
@@ -468,7 +468,7 @@ if show_risk_levels and confluence_bear
                              color=color.new(color.green, 30), style=line.style_dashed, width=2)
 
     // Add label with risk info
-    risk_text = "SL: " + str.tostring(bear_stop_loss, "#.####") + "\nTP: " + str.tostring(bear_take_profit, "#.####") + "\nR:R " + str.tostring(risk_reward_ratio, "#.#")
+    string risk_text = "SL: " + str.tostring(bear_stop_loss, "#.####") + "\nTP: " + str.tostring(bear_take_profit, "#.####") + "\nR:R " + str.tostring(risk_reward_ratio, "#.#")
     bear_risk_label := label.new(bar_index, bear_take_profit, risk_text,
                                   style=label.style_label_up, color=color.red, textcolor=color.white, size=size.small)
 
@@ -495,13 +495,13 @@ if not na(pivot_low)
     array.push(low_bars, bar_index - lookback_period)
 
 // Detect liquidity sweeps
-liquidity_grab_up = false
-liquidity_grab_down = false
+bool liquidity_grab_up = false
+bool liquidity_grab_down = false
 
 // Check if we swept a recent high and reversed
 if array.size(recent_highs) > 0
     for i = 0 to array.size(recent_highs) - 1
-        prev_high = array.get(recent_highs, i)
+        float prev_high = array.get(recent_highs, i)
         if high > prev_high and close < prev_high
             liquidity_grab_up := true
             break
@@ -509,7 +509,7 @@ if array.size(recent_highs) > 0
 // Check if we swept a recent low and reversed
 if array.size(recent_lows) > 0
     for i = 0 to array.size(recent_lows) - 1
-        prev_low = array.get(recent_lows, i)
+        float prev_low = array.get(recent_lows, i)
         if low < prev_low and close > prev_low
             liquidity_grab_down := true
             break
@@ -528,9 +528,9 @@ var float nyHigh = na
 var float nyLow = na
 
 if enable_multi_sessions
-    isAsianSession = hour >= asian_start_hour and hour < asian_end_hour
-    isLondonSession = hour >= london_start_hour and hour < london_end_hour
-    isNYSession = hour >= ny_start_hour and hour < ny_end_hour
+    bool isAsianSession = hour >= asian_start_hour and hour < asian_end_hour
+    bool isLondonSession = hour >= london_start_hour and hour < london_end_hour
+    bool isNYSession = hour >= ny_start_hour and hour < ny_end_hour
 
     // Track Asian session
     if isAsianSession
@@ -587,11 +587,11 @@ alertcondition(liquidity_grab_up or liquidity_grab_down, title="Liquidity Grab",
 
 // === TREND STRENGTH INDICATOR ===
 // Calculate trend strength based on MA alignment
-ma_aligned_bullish = close > ma1 and ma1 > ma2 and ma2 > ma3
-ma_aligned_bearish = close < ma1 and ma1 < ma2 and ma2 < ma3
-ma_mixed = not ma_aligned_bullish and not ma_aligned_bearish
+bool ma_aligned_bullish = close > ma1 and ma1 > ma2 and ma2 > ma3
+bool ma_aligned_bearish = close < ma1 and ma1 < ma2 and ma2 < ma3
+bool ma_mixed = not ma_aligned_bullish and not ma_aligned_bearish
 
-trend_strength = 0
+int trend_strength = 0
 if ma_aligned_bullish
     trend_strength := close > ma1 ? 3 : 2
 else if ma_aligned_bearish
@@ -601,8 +601,8 @@ else if close > ma1
 else if close < ma1
     trend_strength := -1
 
-trend_strength_text = trend_strength >= 3 ? "Strong Bullish" : trend_strength == 2 ? "Bullish" : trend_strength == 1 ? "Weak Bullish" : trend_strength == -1 ? "Weak Bearish" : trend_strength == -2 ? "Bearish" : "Strong Bearish"
-trend_strength_color = trend_strength >= 2 ? color.new(color.green, 0) : trend_strength >= 1 ? color.new(color.green, 50) : trend_strength <= -2 ? color.new(color.red, 0) : trend_strength <= -1 ? color.new(color.red, 50) : color.gray
+string trend_strength_text = trend_strength >= 3 ? "Strong Bullish" : trend_strength == 2 ? "Bullish" : trend_strength == 1 ? "Weak Bullish" : trend_strength == -1 ? "Weak Bearish" : trend_strength == -2 ? "Bearish" : "Strong Bearish"
+color trend_strength_color = trend_strength >= 2 ? color.new(color.green, 0) : trend_strength >= 1 ? color.new(color.green, 50) : trend_strength <= -2 ? color.new(color.red, 0) : trend_strength <= -1 ? color.new(color.red, 50) : color.gray
 
 // === ANALYSIS TABLE ===
 if barstate.islast and showLabels
@@ -618,7 +618,7 @@ if barstate.islast and showLabels
     table.cell(analysisTable, 1, 2, str.tostring(sessionVWAP, "#.####"), text_color=color.black)
 
     table.cell(analysisTable, 0, 3, "Current RSI", text_color=color.black, bgcolor=color.new(color.gray, 80))
-    rsi_color = rsi > rsi_overbought ? color.red : rsi < rsi_oversold ? color.green : color.black
+    color rsi_color = rsi > rsi_overbought ? color.red : rsi < rsi_oversold ? color.green : color.black
     table.cell(analysisTable, 1, 3, str.tostring(rsi, "#.##"), text_color=rsi_color)
 
     table.cell(analysisTable, 0, 4, "VWAP", text_color=color.black, bgcolor=color.new(color.yellow, 80))
