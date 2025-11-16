@@ -576,8 +576,9 @@ if enable_multi_sessions
         nyLow := na
 
 // === ALERTS ===
-alertcondition(confluence_bull, title="Bullish Confluence", message="Multiple bullish signals aligned - Score: " + str.tostring(bullish_score))
-alertcondition(confluence_bear, title="Bearish Confluence", message="Multiple bearish signals aligned - Score: " + str.tostring(bearish_score))
+// Note: alertcondition requires const strings, so scores cannot be included in messages
+alertcondition(confluence_bull, title="Bullish Confluence", message="Multiple bullish signals aligned - Check chart for confluence score")
+alertcondition(confluence_bear, title="Bearish Confluence", message="Multiple bearish signals aligned - Check chart for confluence score")
 alertcondition(rsi_bull_signal, title="RSI Oversold", message="RSI moving out of oversold territory")
 alertcondition(rsi_bear_signal, title="RSI Overbought", message="RSI moving out of overbought territory")
 alertcondition(bullish_divergence, title="Bullish Divergence", message="RSI Bullish Divergence detected")
