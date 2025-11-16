@@ -570,4 +570,4 @@ Real-time display showing:
 
 *Last Updated: November 16, 2025*
 *Version: 2.0 (Optimized)*
-*Pine Script Version: v5*
+*Pine Script Version: v6*
