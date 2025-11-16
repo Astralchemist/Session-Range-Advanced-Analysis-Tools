@@ -568,13 +568,20 @@ if enable_multi_sessions
         nyLow := na
 
 // === ALERTS ===
-alertcondition(confluence_bull, title="Bullish Confluence", message="Multiple bullish signals aligned")
-alertcondition(confluence_bear, title="Bearish Confluence", message="Multiple bearish signals aligned")
-alertcondition(rsi_bull_signal, title="RSI Oversold", message="RSI moving out of oversold territory")
-alertcondition(rsi_bear_signal, title="RSI Overbought", message="RSI moving out of overbought territory")
-alertcondition(bullish_divergence, title="Bullish Divergence", message="RSI Bullish Divergence detected")
-alertcondition(bearish_divergence, title="Bearish Divergence", message="RSI Bearish Divergence detected")
-alertcondition(liquidity_grab_up or liquidity_grab_down, title="Liquidity Grab", message="Liquidity sweep detected")
+if confluence_bull
+    alert("Bullish Confluence - Score: " + str.tostring(bullish_score), alert.freq_once_per_bar_close)
+if confluence_bear
+    alert("Bearish Confluence - Score: " + str.tostring(bearish_score), alert.freq_once_per_bar_close)
+if rsi_bull_signal
+    alert("RSI Oversold - Moving out of oversold territory", alert.freq_once_per_bar_close)
+if rsi_bear_signal
+    alert("RSI Overbought - Moving out of overbought territory", alert.freq_once_per_bar_close)
+if bullish_divergence
+    alert("RSI Bullish Divergence detected", alert.freq_once_per_bar_close)
+if bearish_divergence
+    alert("RSI Bearish Divergence detected", alert.freq_once_per_bar_close)
+if liquidity_grab_up or liquidity_grab_down
+    alert("Liquidity sweep detected", alert.freq_once_per_bar_close)
 
 // === TREND STRENGTH INDICATOR ===
 // Calculate trend strength based on MA alignment
