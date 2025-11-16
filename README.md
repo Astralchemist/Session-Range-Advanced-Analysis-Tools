@@ -162,6 +162,48 @@ The system identifies high-probability setups when multiple conditions align:
 | Show Labels | true | true/false | Display price labels |
 | Show Key S/R Levels | true | true/false | Display support/resistance |
 | S/R Lookback Period | 20 | 5-100 | Bars to look back for pivots |
+| Max S/R Lines | 20 | 5-50 | Maximum S/R lines to display |
+
+### Advanced Settings (v2.0)
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| Use ATR-Based Thresholds | true | true/false | Enable dynamic ATR thresholds |
+| ATR Length | 14 | 1-100 | ATR calculation period |
+| ATR Threshold Multiplier | 0.5 | 0.1-5.0 | Sensitivity adjustment |
+| Minimum Confluence Score | 60 | 0-100 | Minimum score to show signals |
+| Show Confluence Score | true | true/false | Display score on signals |
+| Show RSI Divergence | true | true/false | Enable divergence detection |
+| Divergence Lookback | 5 | 3-20 | Bars to look back for divergence |
+
+### Multi-Timeframe Settings
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Enable MTF Trend Filter | true | Enable higher timeframe analysis |
+| Higher Timeframe | 60 (1H) | Timeframe for trend filter |
+
+### Risk Management Settings
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| Show Risk Levels | true | true/false | Display SL/TP lines |
+| Risk/Reward Ratio | 2.0 | 1.0-10.0 | Target R:R ratio |
+| ATR Stop Multiplier | 1.5 | 0.5-5.0 | Stop distance multiplier |
+
+### Multiple Sessions Settings
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Enable Multiple Sessions | false | Track Asian/London/NY sessions |
+| Asian Start Hour | 0 | Asian session start (24h format) |
+| Asian End Hour | 8 | Asian session end |
+| London Start Hour | 8 | London session start |
+| London End Hour | 16 | London session end |
+| NY Start Hour | 13 | NY session start |
+| NY End Hour | 22 | NY session end |
+
+### Liquidity Settings
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| Show Liquidity Zones | true | true/false | Display liquidity sweeps |
+| Liquidity Lookback | 50 | 20-200 | History to track for sweeps |
 
 ## 📊 Indicator Components
 
@@ -364,21 +406,142 @@ Real-time display showing:
 - Backtest before live trading
 - Keep notes on what works
 
+## 🚀 Advanced Features (v2.0)
+
+### ATR-Based Dynamic Thresholds
+- **Adaptive Proximity Detection** - Uses ATR (Average True Range) to automatically adjust proximity thresholds based on market volatility
+- **Configurable Multiplier** - Fine-tune sensitivity with ATR multiplier (default: 0.5)
+- **Better Accuracy** - Works across different volatility environments without manual adjustment
+
+### Advanced Confluence Scoring System (0-100)
+- **Weighted Scoring** - Each indicator contributes specific points to overall score
+  - Session levels: 20 points
+  - VWAP proximity: 15 points
+  - Moving averages: 5-10 points each
+  - RSI extremes: 10-20 points
+  - Volume confirmation: 10 points
+  - Divergence: 15 points
+  - MTF alignment: 10 points
+- **Color-Coded Signals** - Visual strength indication
+  - Score ≥80: Bright color (high probability)
+  - Score 70-79: Medium color (good probability)
+  - Score 60-69: Lighter color (moderate probability)
+- **Score Display** - Shows exact score on chart signals
+- **Minimum Score Filter** - Configurable threshold (default: 60)
+
+### RSI Divergence Detection
+- **Regular Bullish Divergence** - Price makes lower low, RSI makes higher low (reversal signal)
+- **Regular Bearish Divergence** - Price makes higher high, RSI makes lower high (reversal signal)
+- **Hidden Bullish Divergence** - Trend continuation signal in uptrends
+- **Hidden Bearish Divergence** - Trend continuation signal in downtrends
+- **Visual Markers** - Circle shapes with "DIV" label
+- **Dedicated Alerts** - Separate alerts for divergence detection
+
+### Multi-Timeframe Trend Filter
+- **Higher Timeframe Analysis** - Checks 1H trend (configurable)
+- **Background Color** - Green tint for HTF uptrend, red tint for HTF downtrend
+- **Confluence Integration** - Adds 10 points to confluence score when aligned with HTF trend
+- **Prevent Counter-Trend Trades** - Filter out signals against major trend
+
+### ATR-Based Risk Management Module
+- **Dynamic Stop Loss** - Calculated as: Current Price ± (ATR × Stop Multiplier)
+- **Automatic Take Profit** - Based on configurable Risk/Reward ratio (default: 2.0)
+- **Visual Risk Levels** - Dashed lines showing SL and TP on chart
+- **Risk Labels** - Display exact SL, TP, and R:R values
+- **Adaptive to Volatility** - Stops automatically widen/narrow with market conditions
+
+### Improved Session VWAP Calculation
+- **Proper Weighted Average** - Fixed calculation: Sum(Price × Volume) / Sum(Volume)
+- **More Accurate** - Better representation of institutional levels
+- **Session-Specific** - Resets for each trading session
+
+### Multiple Sessions Support
+- **Asian Session** - Default: 00:00 - 08:00
+- **London Session** - Default: 08:00 - 16:00
+- **New York Session** - Default: 13:00 - 22:00
+- **Color Coded** - Each session has distinct color
+  - Asian: Blue dotted lines
+  - London: Orange dotted lines
+  - NY: Purple dotted lines
+- **Session Overlaps** - Identify high-liquidity periods
+- **Optional Feature** - Enable/disable in settings
+
+### Liquidity Zones & Order Blocks
+- **Liquidity Sweep Detection** - Identifies when price sweeps recent highs/lows and reverses
+- **Smart Memory** - Tracks last 10 pivot highs and lows
+- **Visual Markers** - Yellow X-cross shapes with "LQ" label
+- **Institutional Levels** - Highlights areas where stop-losses are likely triggered
+- **Entry Opportunities** - Potential reversal zones after liquidity grabs
+
+### Enhanced Visual Trend Strength Indicator
+- **MA Alignment Gauge** - Analyzes relationship between price and all MAs
+- **6-Level Strength Scale**:
+  - Strong Bullish (3): All MAs aligned, price above all
+  - Bullish (2): MAs aligned but price near MA1
+  - Weak Bullish (1): Price above MA1, MAs not aligned
+  - Weak Bearish (-1): Price below MA1, MAs not aligned
+  - Bearish (-2): MAs aligned but price near MA1
+  - Strong Bearish (-3): All MAs aligned, price below all
+- **Color-Coded Display** - Bright green to bright red
+- **Analysis Table Integration** - Shows current trend strength
+
+### S/R Line Management System
+- **Automatic Cleanup** - Prevents hitting max_lines_count limit
+- **Array-Based Storage** - Efficiently manages line objects
+- **Configurable Limit** - Max S/R lines (default: 20)
+- **FIFO Deletion** - Oldest lines removed first when limit reached
+- **Performance Optimized** - No more script crashes from too many lines
+
+### Enhanced Analysis Table
+- **12 Metrics Displayed**:
+  1. Session High/Low
+  2. Session VWAP
+  3. Current RSI (color-coded)
+  4. Global VWAP
+  5. MA1 & MA2 values
+  6. Volume Status
+  7. **Trend Strength** (new)
+  8. **ATR** (new)
+  9. **Bullish Confluence Score** (new)
+  10. **Bearish Confluence Score** (new)
+- **Color-Coded Scores** - Active signals highlighted
+- **Real-Time Updates** - Live data on every bar
+
+### Additional Alerts
+- **RSI Divergence Alerts** - Bullish and bearish divergence notifications
+- **Liquidity Grab Alerts** - When price sweeps and reverses
+- **Enhanced Confluence Alerts** - Now include score in message
+- **7 Total Alert Conditions** - Comprehensive coverage of all signals
+
 ## 📋 Version History
 
-### v1.0 (Current)
+### v2.0 (Current - Optimized)
+- ✅ ATR-based dynamic proximity thresholds
+- ✅ Advanced confluence scoring system (0-100)
+- ✅ RSI divergence detection (regular & hidden)
+- ✅ Multi-timeframe trend filter
+- ✅ ATR-based risk management module
+- ✅ Improved session VWAP calculation
+- ✅ Multiple sessions support (Asian/London/NY)
+- ✅ Liquidity zones and order blocks detection
+- ✅ Enhanced visual trend strength indicator
+- ✅ S/R line management system
+- ✅ Enhanced analysis table with 12 metrics
+- ✅ Additional alert conditions
+
+### v1.0
 - Initial release with full feature set
 - Session range detection and visualization
 - Multiple technical indicators integration
-- Confluence detection algorithm
+- Basic confluence detection algorithm
 - Professional analysis table
 - Comprehensive alert system
 
 ### Planned Updates
-- **v1.1** - Additional MA types (TEMA, HMA)
-- **v1.2** - Fibonacci retracement integration
-- **v1.3** - Multi-session support
-- **v1.4** - Enhanced volume profile features
+- **v2.1** - Volume profile POC (Point of Control)
+- **v2.2** - Fibonacci retracement integration
+- **v2.3** - Smart Money Concepts (CHoCH, BOS)
+- **v2.4** - Additional MA types (TEMA, HMA, DEMA)
 
 ## 📞 Support & Resources
 
@@ -405,6 +568,6 @@ Real-time display showing:
 
 ---
 
-*Last Updated: May 28, 2025*
-*Version: 1.0*
+*Last Updated: November 16, 2025*
+*Version: 2.0 (Optimized)*
 *Pine Script Version: v5*
