@@ -399,8 +399,8 @@ confluence_bear = bearish_score >= min_confluence_score
 bull_color = bullish_score >= 80 ? color.new(color.lime, 0) : bullish_score >= 70 ? color.new(color.green, 20) : color.new(color.green, 40)
 bear_color = bearish_score >= 80 ? color.new(color.fuchsia, 0) : bearish_score >= 70 ? color.new(color.red, 20) : color.new(color.red, 40)
 
-plotshape(confluence_bull, "Bullish Confluence", shape.diamond, location.belowbar, bull_color, size=size.normal, text=show_confluence_score ? str.tostring(bullish_score) : "")
-plotshape(confluence_bear, "Bearish Confluence", shape.diamond, location.abovebar, bear_color, size=size.normal, text=show_confluence_score ? str.tostring(bearish_score) : "")
+plotshape(confluence_bull, "Bullish Confluence", shape.diamond, location.belowbar, bull_color, size=size.normal)
+plotshape(confluence_bear, "Bearish Confluence", shape.diamond, location.abovebar, bear_color, size=size.normal)
 
 // === RISK MANAGEMENT MODULE ===
 // Calculate ATR-based stop loss and take profit levels
